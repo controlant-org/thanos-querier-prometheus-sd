@@ -21,7 +21,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Create out Kubernetes clientset.
+	// Create our Kubernetes clientset.
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		log.Fatal(err)
