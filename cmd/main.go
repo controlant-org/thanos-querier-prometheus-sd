@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"time"
 
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -15,6 +18,15 @@ import (
 )
 
 func main() {
+	// Setup our CLI arguments.
+	flag.String("output-file", "/tmp/tqsd/result.yaml", "The location of the output file.")
+	flag.Int("interval", 10000, "The number of milliseconds to wait between discovery cycles.")
+
+	// Bring in any flags set on the command line.
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
+	viper.BindPFlags(pflag.CommandLine)
+
 	// Get our Kubernetes auth by assuming we're in a cluster and using our service account.
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -54,13 +66,12 @@ func main() {
 			log.Fatal(err)
 		}
 
-		// TODO: configurable service discovery output file.
-		err = ioutil.WriteFile("/tmp/sd/result.yaml", result, 0644)
+		err = ioutil.WriteFile(viper.GetString("output-file"), result, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// Wait for the next cycle.
-		time.Sleep(10 * time.Second)
+		time.Sleep(time.Duration(viper.GetInt("interval")) * time.Millisecond)
 	}
 }
